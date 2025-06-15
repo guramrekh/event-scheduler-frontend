@@ -18,11 +18,14 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EditEventForm from "./EditEventForm";
 
 const EventCard = ({ event }) => {
   const formattedDate = new Date(event.dateTime).toLocaleDateString('en-US', {
@@ -69,16 +72,28 @@ const EventCard = ({ event }) => {
              <DialogTrigger asChild>
                 <Button className="w-full">View Details</Button>
              </DialogTrigger>
-             <DialogContent>
+             <DialogContent className="sm:max-w-[480px]">
                <DialogHeader>
-                 <DialogTitle>Edit: {event.name}</DialogTitle>
+                 <DialogTitle>{event.name}</DialogTitle>
+                 <DialogDescription>{event.location}</DialogDescription>
                </DialogHeader>
-               <p>Event editing form would go here.</p>
-               <div className="flex gap-2 mt-4">
-                 <Button variant="outline">Add Organizer</Button>
-                 <Button variant="outline">Remove Organizer</Button>
-                 <Button variant="destructive">Cancel Event</Button>
-               </div>
+               <Tabs defaultValue="actions">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="actions">Actions</TabsTrigger>
+                  <TabsTrigger value="edit">Edit Details</TabsTrigger>
+                </TabsList>
+                <TabsContent value="actions">
+                  <div className="flex flex-col gap-2 mt-4">
+                    <p className="text-sm text-muted-foreground">Manage your event by adding or removing organizers, or cancel it if needed.</p>
+                    <Button variant="outline">Add Organizer</Button>
+                    <Button variant="outline">Remove Organizer</Button>
+                    <Button variant="destructive">Cancel Event</Button>
+                  </div>
+                </TabsContent>
+                <TabsContent value="edit">
+                  <EditEventForm event={event} />
+                </TabsContent>
+               </Tabs>
              </DialogContent>
            </Dialog>
         ) : (
