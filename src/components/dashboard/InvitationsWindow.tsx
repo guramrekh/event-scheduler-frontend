@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -8,12 +7,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, User, Check, X } from "lucide-react";
-
-const mockInvitations = [
-  { id: 1, inviter: "Dave", eventName: "Board Game Night", dateTime: "2025-07-15T19:00:00", location: "Dave's Place" },
-  { id: 2, inviter: "Eve", eventName: "Community Hackathon", dateTime: "2025-08-01T09:00:00", location: "Tech Hub" },
-];
+import { Calendar, MapPin, Check, X } from "lucide-react";
+import { mockInvitations } from "@/data/mockData";
+import UserProfile from "./UserProfile";
 
 const InvitationsWindow = () => {
   return (
@@ -26,10 +22,10 @@ const InvitationsWindow = () => {
           <Card key={invite.id}>
             <CardHeader>
               <CardTitle>{invite.eventName}</CardTitle>
-              <CardDescription>Invited by {invite.inviter}</CardDescription>
+              <CardDescription>Invited by <UserProfile user={invite.inviter} /></CardDescription>
             </CardHeader>
             <CardContent className="grid gap-2 text-sm">
-               <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span>{new Date(invite.dateTime).toLocaleDateString()}</span>
               </div>

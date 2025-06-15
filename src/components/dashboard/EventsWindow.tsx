@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -6,13 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import EventCard from "./EventCard";
 import { Filter } from "lucide-react";
-
-const mockEvents = [
-  { id: 1, name: "Project Kick-off", description: "Initial meeting for the new project.", location: "Online", dateTime: "2025-07-01T10:00:00", organizers: ["Alice"], attendees: 12, isOrganizer: true, status: "upcoming" },
-  { id: 2, name: "Design Sprint", description: "Week-long design sprint.", location: "Office 301", dateTime: "2025-07-05T09:00:00", organizers: ["Bob"], attendees: 8, isOrganizer: false, status: "upcoming" },
-  { id: 3, name: "Quarterly Review", description: "Review of Q2 performance.", location: "Conference Hall", dateTime: "2025-06-10T14:00:00", organizers: ["Charlie"], attendees: 25, isOrganizer: false, status: "occurred" },
-  { id: 4, name: "Team Lunch", description: "Cancelled due to weather.", location: "The Grand Cafe", dateTime: "2025-06-14T12:30:00", organizers: ["Alice"], attendees: 10, isOrganizer: true, status: "cancelled" },
-];
+import { mockEvents } from "@/data/mockData";
 
 const EventsWindow = () => {
   return (

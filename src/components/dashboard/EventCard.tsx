@@ -1,4 +1,5 @@
 
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -10,11 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Users, MapPin, Calendar, User, UserX } from "lucide-react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EditEventForm from "./EditEventForm";
+import UserProfile from "./UserProfile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventCard = ({ event }) => {
   const formattedDate = new Date(event.dateTime).toLocaleDateString('en-US', {
@@ -50,20 +52,42 @@ const EventCard = ({ event }) => {
         </div>
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
-          <span>Organized by {event.organizers.join(", ")}</span>
+          <span>
+            Organized by {event.organizers.map((organizer, index) => (
+              <React.Fragment key={organizer.id}>
+                <UserProfile user={organizer} />
+                {index < event.organizers.length - 1 && ', '}
+              </React.Fragment>
+            ))}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="cursor-pointer underline">{event.attendees} attendees</span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Attendee list would show here.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Popover>
+            <PopoverTrigger asChild>
+              <span className="cursor-pointer underline">{event.attendees.length} attendees</span>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+               <div className="grid gap-4">
+                <h4 className="font-medium leading-none">Attendees</h4>
+                <div className="grid gap-2 max-h-60 overflow-y-auto">
+                  {event.attendees.length > 0 ? (
+                    event.attendees.map(attendee => (
+                      <div key={attendee.id} className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={attendee.avatar} alt={attendee.name}/>
+                          <AvatarFallback>{attendee.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <UserProfile user={attendee} />
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No attendees yet.</p>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </CardContent>
       <CardFooter>
