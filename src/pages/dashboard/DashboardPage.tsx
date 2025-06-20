@@ -1,4 +1,3 @@
-
 import EventsWindow from "@/components/dashboard/EventsWindow";
 
 const DashboardPage = () => {

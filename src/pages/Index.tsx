@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CalendarDays, Users, ArrowRight } from "lucide-react";
@@ -6,12 +5,12 @@ import { CalendarDays, Users, ArrowRight } from "lucide-react";
 const LandingPage = () => {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-14 flex items-center">
-        <Link to="/" className="flex items-center justify-center">
-          <CalendarDays className="h-6 w-6" />
-          <span className="sr-only">Event Scheduler</span>
+      <header className="px-4 lg:px-6 h-16 flex items-center py-2">
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/logo.jpg" alt="Logo" className="h-7 w-7" />
+          <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Huddle</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
+        <nav className="ml-auto flex items-center gap-4 sm:gap-6">
           <Link
             to="/login"
             className="text-sm font-medium hover:underline underline-offset-4"
