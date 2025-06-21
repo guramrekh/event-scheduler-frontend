@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Get the intended destination from navigation state, or default to dashboard
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.id]: e.target.value });
@@ -22,7 +26,7 @@ const Login = () => {
     setLoading(true);
     try {
       await login(form);
-      navigate("/dashboard");
+      navigate(from, { replace: true });
     } catch (err: any) {
       if (err.response?.data?.message) {
         setError(err.response.data.message);

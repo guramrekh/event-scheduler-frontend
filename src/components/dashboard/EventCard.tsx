@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -37,9 +37,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { withdrawFromEvent, editEvent, cancelEvent, addAsOrganizer, removeAsOrganizer, kickOutAttendee } from "@/lib/api";
+import { withdrawFromEvent, editEvent, cancelEvent, addAsOrganizer, removeAsOrganizer, kickOutAttendee, markAttended, markAllAttended } from "@/lib/api";
 import { Checkbox } from '@/components/ui/checkbox';
-import { getUserByEmail, getUsersByName, inviteUser } from "@/lib/api";
+import { getUserByEmail, getUsersByName, inviteUser, getCurrentUser } from "@/lib/api";
+import { useUser } from "@/contexts/UserContext";
 
 // User type for organizers and attendees
 interface UserData {
@@ -57,6 +58,22 @@ interface SearchUserData {
   email: string;
 }
 
+// Type for current user
+interface CurrentUserData {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+// Attendance status enum
+enum AttendanceStatus {
+  REGISTERED = "REGISTERED",
+  ATTENDED = "ATTENDED",
+  WITHDRAWN = "WITHDRAWN",
+  KICKED = "KICKED"
+}
+
 // Type for the event data from backend
 interface EventData {
   id: number;
@@ -67,6 +84,7 @@ interface EventData {
   isCancelled: boolean;
   organizers: UserData[];
   attendees: UserData[];
+  userAttendanceStatus?: { [userId: number]: AttendanceStatus }; // Map of userId to attendance status
 }
 
 // Type for the wrapper DTO that includes role
@@ -133,6 +151,32 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
   const [inviteLoading, setInviteLoading] = useState<number | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [invitedUsers, setInvitedUsers] = useState<Set<number>>(new Set());
+  const { currentUser, setCurrentUser } = useUser();
+
+  // Check if event is past
+  const isPastEvent = new Date(event.dateTime) < new Date();
+
+  // Fetch current user when modal opens
+  useEffect(() => {
+    if (isOpen && !currentUser) {
+      getCurrentUser()
+        .then(response => setCurrentUser(response.data))
+        .catch(error => console.error('Failed to fetch current user:', error));
+    }
+  }, [isOpen, currentUser, setCurrentUser]);
+
+  // Helper function to display user name with 'You' for current user
+  const displayUserName = (user: UserData | SearchUserData) => {
+    if (currentUser && user.id === currentUser.id) {
+      return 'You';
+    }
+    return `${user.firstName} ${user.lastName}`;
+  };
+
+  // Helper function to check if user is marked as attended
+  const isUserAttended = (userId: number) => {
+    return event.userAttendanceStatus?.[userId] === AttendanceStatus.ATTENDED;
+  };
 
   const handleEditEvent = async () => {
     setLoading(true);
@@ -209,6 +253,30 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
     }
   };
 
+  const handleMarkAttended = async (userId: number) => {
+    setLoading(true);
+    try {
+      await markAttended(event.id, userId);
+      onEventUpdate?.();
+    } catch (error) {
+      console.error('Failed to mark as attended:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkAllAttended = async () => {
+    setLoading(true);
+    try {
+      await markAllAttended(event.id);
+      onEventUpdate?.();
+    } catch (error) {
+      console.error('Failed to mark all as attended:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -269,243 +337,330 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Manage '{event.title}'</DialogTitle>
+          <DialogTitle className="text-2xl">
+            {isPastEvent ? `Event Details - ${event.title}` : `Manage '${event.title}'`}
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-6">
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={editData.title}
-                onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-              />
+          {/* Event Details Section - Only for upcoming events */}
+          {!isPastEvent && (
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={editData.title}
+                  onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={editData.description}
+                  onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="dateTime">Date & Time</Label>
+                <Input
+                  id="dateTime"
+                  type="datetime-local"
+                  value={editData.dateTime}
+                  onChange={(e) => setEditData(prev => ({ ...prev, dateTime: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={editData.location}
+                  onChange={(e) => setEditData(prev => ({ ...prev, location: e.target.value }))}
+                />
+              </div>
+              <div className="flex items-center space-x-2 pt-2">
+                <Checkbox id="notify" checked={notifyParticipants} onCheckedChange={(checked) => setNotifyParticipants(!!checked)} />
+                <Label htmlFor="notify">Notify participants</Label>
+              </div>
+              <Button onClick={handleEditEvent} disabled={loading} className="mt-2">
+                <Edit className="mr-2 h-4 w-4" />
+                Save Changes
+              </Button>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={editData.description}
-                onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="dateTime">Date & Time</Label>
-              <Input
-                id="dateTime"
-                type="datetime-local"
-                value={editData.dateTime}
-                onChange={(e) => setEditData(prev => ({ ...prev, dateTime: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={editData.location}
-                onChange={(e) => setEditData(prev => ({ ...prev, location: e.target.value }))}
-              />
-            </div>
-            <div className="flex items-center space-x-2 pt-2">
-              <Checkbox id="notify" checked={notifyParticipants} onCheckedChange={(checked) => setNotifyParticipants(!!checked)} />
-              <Label htmlFor="notify">Notify participants</Label>
-            </div>
-            <Button onClick={handleEditEvent} disabled={loading} className="mt-2">
-              <Edit className="mr-2 h-4 w-4" />
-              Save Changes
-            </Button>
-          </div>
+          )}
 
+          {/* Organizers Section */}
           <div className="grid gap-4">
             <h3 className="text-lg font-semibold underline">Organizers</h3>
             <div className="grid gap-2 max-h-32 overflow-y-auto">
               {event.organizers.map((organizer) => (
                 <div key={organizer.id} className="flex items-center justify-between">
-                  <span className="text-base">{organizer.firstName} {organizer.lastName}</span>
-                  {event.organizers.length > 1 && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remove Organizer</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to remove {organizer.firstName} {organizer.lastName} as an organizer?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleRemoveOrganizer(organizer.id)}>
-                            Remove
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            <h3 className="text-lg font-semibold underline">Attendees</h3>
-            <div className="grid gap-2 max-h-32 overflow-y-auto">
-              {event.attendees.map((attendee) => (
-                <div key={attendee.id} className="flex items-center justify-between">
-                  <span className="text-base">{attendee.firstName} {attendee.lastName}</span>
+                  <UserSummaryModal user={organizer}>
+                    <span className="text-base font-medium text-primary hover:underline cursor-pointer">
+                      {displayUserName(organizer)}
+                    </span>
+                  </UserSummaryModal>
                   <div className="flex gap-2">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <UserPlus className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Add as Organizer</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to make {attendee.firstName} {attendee.lastName} an organizer?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleAddOrganizer(attendee.id)}>
-                            Add as Organizer
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <UserX className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Kick Out Attendee</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to kick out {attendee.firstName} {attendee.lastName} from this event?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleKickOutAttendee(attendee.id)}>
-                            Kick Out
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    {isPastEvent ? (
+                      // For past events, show attendance status for organizers too
+                      (() => {
+                        const status = event.userAttendanceStatus?.[organizer.id];
+                        if (status === AttendanceStatus.ATTENDED) {
+                          return <Badge variant="secondary" className="text-xs">Attended</Badge>;
+                        } else if (status === AttendanceStatus.WITHDRAWN) {
+                          return <Badge variant="destructive" className="text-xs">Absent</Badge>;
+                        } else {
+                          return (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleMarkAttended(organizer.id)}
+                              disabled={loading}
+                            >
+                              Mark as Attended
+                            </Button>
+                          );
+                        }
+                      })()
+                    ) : (
+                      // For upcoming events, show remove organizer button
+                      event.organizers.length > 1 && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <UserMinus className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove Organizer</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {currentUser && organizer.id === currentUser.id
+                                  ? "Are you sure you want to remove yourself as an organizer?"
+                                  : `Are you sure you want to remove ${displayUserName(organizer)} as an organizer?`
+                                }
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleRemoveOrganizer(organizer.id)}>
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="grid gap-4 border-t pt-4">
-            <h3 className="text-lg font-semibold">Invite Users</h3>
-            <div className="grid gap-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Search by email or name (e.g., Kevin Durant)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                />
-                <Button onClick={handleSearch} disabled={searchLoading}>
-                  {searchLoading ? 'Searching...' : 'Search'}
-                </Button>
-              </div>
-              
-              {filteredSearchResults.length > 0 && (
-                <div className="grid gap-2 max-h-40 overflow-y-auto">
-                  {filteredSearchResults.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-2 border rounded">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src="" alt={`${user.firstName} ${user.lastName}`} />
-                          <AvatarFallback className="text-xs">
-                            {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium text-sm">{user.firstName} {user.lastName}</div>
-                          <div className="text-xs text-muted-foreground">{user.email}</div>
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleInvite(user.id)}
-                        disabled={inviteLoading === user.id || invitedUsers.has(user.id)}
-                      >
-                        {inviteLoading === user.id ? 'Inviting...' : invitedUsers.has(user.id) ? 'Invited' : 'Send Invite'}
-                      </Button>
-                    </div>
-                  ))}
+          {/* Attendees Section */}
+          <div className="grid gap-4">
+            <h3 className="text-lg font-semibold underline">Attendees</h3>
+            <div className="grid gap-2 max-h-32 overflow-y-auto">
+              {event.attendees.map((attendee) => (
+                <div key={attendee.id} className="flex items-center justify-between">
+                  <UserSummaryModal user={attendee}>
+                    <span className="text-base font-medium text-primary hover:underline cursor-pointer">
+                      {displayUserName(attendee)}
+                    </span>
+                  </UserSummaryModal>
+                  <div className="flex gap-2">
+                    {isPastEvent ? (
+                      // For past events, show attendance status
+                      (() => {
+                        const status = event.userAttendanceStatus?.[attendee.id];
+                        if (status === AttendanceStatus.ATTENDED) {
+                          return <Badge variant="secondary" className="text-xs">Attended</Badge>;
+                        } else if (status === AttendanceStatus.WITHDRAWN) {
+                          return <Badge variant="destructive" className="text-xs">Absent</Badge>;
+                        } else {
+                          return (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleMarkAttended(attendee.id)}
+                              disabled={loading}
+                            >
+                              Mark as Attended
+                            </Button>
+                          );
+                        }
+                      })()
+                    ) : (
+                      // For upcoming events, show role management buttons
+                      <>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <UserPlus className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Add as Organizer</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to make {displayUserName(attendee)} an organizer?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleAddOrganizer(attendee.id)}>
+                                Add as Organizer
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <UserX className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Kick Out Attendee</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to kick out {displayUserName(attendee)} from this event?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleKickOutAttendee(attendee.id)}>
+                                Kick Out
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
+                  </div>
                 </div>
-              )}
-              
-              {hasSearched && !searchLoading && searchQuery.trim() && filteredSearchResults.length === 0 && (
-                <div className="text-center py-4 text-muted-foreground">
-                  No users found matching your search.
-                </div>
-              )}
+              ))}
             </div>
+            {/* Mark All Attended button for past events */}
+            {isPastEvent && (event.attendees.length > 0 || event.organizers.length > 0) && 
+             [...event.attendees, ...event.organizers].some(user => event.userAttendanceStatus?.[user.id] !== AttendanceStatus.ATTENDED) && (
+              <Button 
+                variant="outline" 
+                onClick={handleMarkAllAttended}
+                disabled={loading}
+                className="mt-2"
+              >
+                Mark All as Attended
+              </Button>
+            )}
           </div>
 
-          {/* Danger Zone */}
-          <div className="grid gap-4 border-t pt-4">
-            <h3 className="text-lg font-semibold text-red-600">Danger Zone</h3>
-            <div className="flex gap-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Cancel Event
+          {/* User Invitation Section - Only for upcoming events */}
+          {!isPastEvent && (
+            <div className="grid gap-4 border-t pt-4">
+              <h3 className="text-lg font-semibold">Invite Users</h3>
+              <div className="grid gap-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search by email or name (e.g., Kevin Durant)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                  <Button onClick={handleSearch} disabled={searchLoading}>
+                    {searchLoading ? 'Searching...' : 'Search'}
                   </Button>
-                </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Cancel Event</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to cancel this event? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>No, keep event</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleCancelEvent}>
-                            Yes, cancel event
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-              </AlertDialog>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline">
-                    <LogOut className="mr-2 h-4 w-4" />Withdraw
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Withdraw from Event</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to withdraw from this event?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleWithdrawFromEvent}>
-                      Withdraw
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                </div>
+                
+                {filteredSearchResults.length > 0 && (
+                  <div className="grid gap-2 max-h-40 overflow-y-auto">
+                    {filteredSearchResults.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-2 border rounded">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src="" alt={`${user.firstName} ${user.lastName}`} />
+                            <AvatarFallback className="text-xs">
+                              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium text-sm">{displayUserName(user)}</div>
+                            <div className="text-xs text-muted-foreground">{user.email}</div>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleInvite(user.id)}
+                          disabled={inviteLoading === user.id || invitedUsers.has(user.id)}
+                        >
+                          {inviteLoading === user.id ? 'Inviting...' : invitedUsers.has(user.id) ? 'Invited' : 'Send Invite'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {hasSearched && !searchLoading && searchQuery.trim() && filteredSearchResults.length === 0 && (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No users found matching your search.
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Danger Zone - Only for upcoming events */}
+          {!isPastEvent && (
+            <div className="grid gap-4 border-t pt-4">
+              <h3 className="text-lg font-semibold text-red-600">Danger Zone</h3>
+              <div className="flex gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Cancel Event
+                    </Button>
+                  </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Cancel Event</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to cancel this event? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>No, keep event</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleCancelEvent}>
+                              Yes, cancel event
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                </AlertDialog>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline">
+                      <LogOut className="mr-2 h-4 w-4" />Withdraw
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Withdraw from Event</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to withdraw from this event?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleWithdrawFromEvent}>
+                        Withdraw
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -514,6 +669,7 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
 
 const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) => {
   const [loading, setLoading] = useState(false);
+  const { currentUser } = useUser();
   const { event, role } = eventWithRole;
   
   const formattedDate = new Date(event.dateTime).toLocaleDateString('en-US', {
@@ -539,6 +695,14 @@ const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) =
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to display user name with 'You' for current user
+  const displayUserName = (user: UserData) => {
+    if (currentUser && user.id === currentUser.id) {
+      return 'You';
+    }
+    return `${user.firstName} ${user.lastName}`;
   };
 
   return (
@@ -577,7 +741,7 @@ const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) =
               <React.Fragment key={organizer.id}>
                 <UserSummaryModal user={organizer}>
                   <span className="font-medium text-primary hover:underline cursor-pointer">
-                    {organizer.firstName} {organizer.lastName.charAt(0)}.
+                    {displayUserName(organizer)}
                   </span>
                 </UserSummaryModal>
                 {index < event.organizers.length - 1 && ', '}
@@ -602,8 +766,14 @@ const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) =
                         <div key={organizer.id} className="flex items-center gap-2">
                           <UserSummaryModal user={organizer}>
                             <span className="font-medium text-primary hover:underline cursor-pointer text-sm flex items-center gap-1">
-                              {organizer.firstName} {organizer.lastName}
+                              {displayUserName(organizer)}
                               <Star className="h-4 w-4 text-yellow-500 inline" />
+                              {!isUpcoming && event.userAttendanceStatus?.[organizer.id] === AttendanceStatus.ATTENDED && (
+                                <Badge variant="secondary" className="text-xs">✓</Badge>
+                              )}
+                              {!isUpcoming && event.userAttendanceStatus?.[organizer.id] === AttendanceStatus.WITHDRAWN && (
+                                <Badge variant="destructive" className="text-xs">✗</Badge>
+                              )}
                             </span>
                           </UserSummaryModal>
                         </div>
@@ -615,7 +785,13 @@ const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) =
                       <div key={attendee.id} className="flex items-center gap-2">
                         <UserSummaryModal user={attendee}>
                           <span className="font-medium text-primary hover:underline cursor-pointer text-sm flex items-center gap-1">
-                            {attendee.firstName} {attendee.lastName}
+                            {displayUserName(attendee)}
+                            {!isUpcoming && event.userAttendanceStatus?.[attendee.id] === AttendanceStatus.ATTENDED && (
+                              <Badge variant="secondary" className="text-xs">✓</Badge>
+                            )}
+                            {!isUpcoming && event.userAttendanceStatus?.[attendee.id] === AttendanceStatus.WITHDRAWN && (
+                              <Badge variant="destructive" className="text-xs">✗</Badge>
+                            )}
                           </span>
                         </UserSummaryModal>
                       </div>
@@ -635,7 +811,7 @@ const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) =
             <EventManagementModal event={event} onEventUpdate={onEventUpdate}>
               <Button variant="outline" size="sm">
                 <Settings className="mr-2 h-4 w-4" />
-                View Details
+                {isUpcoming ? "Manage Event" : "View Details"}
               </Button>
             </EventManagementModal>
           )}

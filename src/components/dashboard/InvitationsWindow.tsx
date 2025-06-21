@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Check, X, Star, Users } from "lucide-react";
+import { Calendar, MapPin, Check, X, Star, Users, Inbox, CheckCircle, XCircle, Clock, PartyPopper, CalendarX, Mail } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useState, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -166,6 +166,45 @@ const InvitationsWindow = () => {
     });
   };
 
+  // Empty state content based on filter
+  const getEmptyStateContent = () => {
+    switch (filter) {
+      case "PENDING":
+        return {
+          icon: <Inbox className="h-16 w-16 text-muted-foreground" />,
+          title: "No Pending Invitations",
+          subtitle: "When someone invites you to an event, it'll appear here for you to accept or decline."
+        };
+      case "ACCEPTED":
+        return {
+          icon: <CheckCircle className="h-16 w-16 text-green-500" />,
+          title: "No Accepted Invitations",
+          subtitle: "Accepted invitations will show here, and you can view them in your main events list."
+        };
+      case "DECLINED":
+        return {
+          icon: <XCircle className="h-16 w-16 text-red-500" />,
+          title: "No Declined Invitations",
+          subtitle: "You haven't had to decline any invitations yet."
+        };
+      case "EXPIRED":
+        return {
+          icon: <Clock className="h-16 w-16 text-orange-500" />,
+          title: "No Expired Invitations",
+          subtitle: "Expired invitations will be listed here if you don't respond in time."
+        };
+      default:
+        return {
+          icon: <Mail className="h-16 w-16 text-muted-foreground" />,
+          title: "No Invitations",
+          description: "You don't have any invitations in this category.",
+          subtitle: "Check other tabs to see different types of invitations."
+        };
+    }
+  };
+
+  const emptyState = getEmptyStateContent();
+
   return (
     <div className="grid gap-6">
       <div className="flex items-center justify-between">
@@ -177,11 +216,41 @@ const InvitationsWindow = () => {
           <ToggleGroupItem value="EXPIRED" className="w-24">Expired</ToggleGroupItem>
         </ToggleGroup>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {invitations.map(invite => (
-          <InvitationCard key={invite.id} invitation={invite} onRespond={handleRespond} loading={loading} />
-        ))}
-      </div>
+      
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-6 bg-muted rounded w-3/4"></div>
+                <div className="h-4 bg-muted rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-4 bg-muted rounded"></div>
+                  <div className="h-4 bg-muted rounded w-2/3"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : invitations.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {invitations.map(invite => (
+            <InvitationCard key={invite.id} invitation={invite} onRespond={handleRespond} loading={loading} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="mb-6">
+            {emptyState.icon}
+          </div>
+          <h2 className="text-2xl font-semibold mb-2">{emptyState.title}</h2>
+          <p className="text-muted-foreground mb-4 max-w-md">{emptyState.description}</p>
+          <p className="text-sm text-muted-foreground max-w-md">{emptyState.subtitle}</p>
+        </div>
+      )}
     </div>
   );
 };

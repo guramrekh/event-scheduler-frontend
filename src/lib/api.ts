@@ -15,15 +15,7 @@ function getCookie(name: string) {
   if (parts.length === 2) return parts.pop()?.split(';').shift();
 }
 
-// axios.interceptors.request.use(config => {
-//   const token = getCookie('XSRF-TOKEN');
-//   if (token && config.headers) {
-//     config.headers['X-XSRF-TOKEN'] = token;
-//   }
-//   return config;
-// });
 
-// *** CHANGE IS HERE: 'api' instead of 'axios' ***
 api.interceptors.request.use(config => {
     const token = getCookie('XSRF-TOKEN');
     if (token && config.headers) {
@@ -31,6 +23,18 @@ api.interceptors.request.use(config => {
     }
     return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 
 export async function register(user: {
@@ -127,6 +131,27 @@ export async function getUsersByName(firstName: string, lastName: string) {
 
 export async function inviteUser(eventId: number, inviteeId: number) {
   return api.post("/invitations/invite", null, { params: { eventId, inviteeId } });
+}
+
+export async function getCurrentUser() {
+  return api.get("/users/me");
+}
+
+export async function createEvent(eventData: {
+  title: string;
+  description?: string;
+  dateTime: string;
+  location: string;
+}) {
+  return api.post("/events/create", eventData);
+}
+
+export async function markAttended(eventId: number, attendeeUserId: number) {
+  return api.put("/events/mark-attended", null, { params: { eventId, attendeeUserId } });
+}
+
+export async function markAllAttended(eventId: number) {
+  return api.put("/events/mark-all-attended", null, { params: { eventId } });
 }
 
 export default api;

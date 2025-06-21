@@ -1,4 +1,4 @@
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import {
   Bell,
   Calendar,
@@ -24,13 +24,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { fetchNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "@/lib/api";
+import { fetchNotifications, markAllNotificationsAsRead, markNotificationAsRead, logout } from "@/lib/api";
 import UserProfile from "./dashboard/UserProfile";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useUser } from "@/contexts/UserContext";
 
 const notificationIcons = {
   EVENT_INVITATION_RECEIVED: <Mail className="h-4 w-4" />,
@@ -50,6 +51,8 @@ const getNotificationIcon = (type: string) => {
 }
 
 const Header = () => {
+  const navigate = useNavigate();
+  const { clearUserState } = useUser();
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     `transition-colors hover:text-foreground ${
       isActive ? "text-foreground font-semibold" : "text-muted-foreground"
@@ -63,8 +66,15 @@ const Header = () => {
     setLoading(true);
     setError(null);
     fetchNotifications()
-      .then(res => setNotifications(res.data))
-      .catch(() => setError("Failed to load notifications."))
+      .then(res => {
+        // Ensure notifications is always an array
+        const notificationsData = Array.isArray(res.data) ? res.data : [];
+        setNotifications(notificationsData);
+      })
+      .catch(() => {
+        setError("Failed to load notifications.");
+        setNotifications([]); // Set empty array on error
+      })
       .finally(() => setLoading(false));
   };
   
@@ -92,10 +102,31 @@ const Header = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Clear all user-related state
+      clearUserState();
+      setNotifications([]);
+      setError(null);
+      setLoading(false);
+      // Redirect to landing page
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still clear state and redirect even if logout API fails
+      clearUserState();
+      setNotifications([]);
+      setError(null);
+      setLoading(false);
+      navigate("/", { replace: true });
+    }
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 py-2 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 py-2 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:pt-4">
       
       <div className="flex items-center gap-2">
          <Link to="/" className="flex items-center gap-2 font-semibold">
@@ -188,7 +219,7 @@ const Header = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link to="/dashboard/settings">Settings</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link to="/">Logout</Link></DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

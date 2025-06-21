@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,9 +19,7 @@ const EditEventForm = ({ event }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Updated event data:", formData);
-    // Here you would typically call an API to update the event
-    alert("Event details saved! Check the console for the data.");
+    alert("Event details saved!");
   };
 
   return (
