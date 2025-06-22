@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatNotificationDate } from "@/lib/utils";
 
 interface Notification {
   id: number;
@@ -81,7 +82,7 @@ const NotificationsWindow = () => {
                         {n.message}
                         {!n.read && <Badge variant="destructive">New</Badge>}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{formatNotificationDate(n.createdAt)}</div>
                     </div>
                     <Button
                       size="sm"
@@ -108,7 +109,7 @@ const NotificationsWindow = () => {
                     {n.message}
                     {!n.read && <Badge variant="destructive">New</Badge>}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{formatNotificationDate(n.createdAt)}</div>
                 </div>
                 <Button
                   size="sm"

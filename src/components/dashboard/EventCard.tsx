@@ -74,7 +74,6 @@ enum AttendanceStatus {
   KICKED = "KICKED"
 }
 
-// Type for the event data from backend
 interface EventData {
   id: number;
   title: string;
@@ -84,10 +83,9 @@ interface EventData {
   isCancelled: boolean;
   organizers: UserData[];
   attendees: UserData[];
-  userAttendanceStatus?: { [userId: number]: AttendanceStatus }; // Map of userId to attendance status
+  userAttendanceStatus?: { [userId: number]: AttendanceStatus };
 }
 
-// Type for the wrapper DTO that includes role
 interface EventWithRoleDto {
   event: EventData;
   role: "ORGANIZER" | "ATTENDEE" | null;
@@ -151,26 +149,26 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
   const [inviteLoading, setInviteLoading] = useState<number | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [invitedUsers, setInvitedUsers] = useState<Set<number>>(new Set());
-  const { currentUser, setCurrentUser } = useUser();
+  const { user, setUser } = useUser();
 
   // Check if event is past
   const isPastEvent = new Date(event.dateTime) < new Date();
 
   // Fetch current user when modal opens
   useEffect(() => {
-    if (isOpen && !currentUser) {
+    if (isOpen && !user) {
       getCurrentUser()
-        .then(response => setCurrentUser(response.data))
+        .then(response => setUser(response.data))
         .catch(error => console.error('Failed to fetch current user:', error));
     }
-  }, [isOpen, currentUser, setCurrentUser]);
+  }, [isOpen, user, setUser]);
 
   // Helper function to display user name with 'You' for current user
-  const displayUserName = (user: UserData | SearchUserData) => {
-    if (currentUser && user.id === currentUser.id) {
+  const displayUserName = (userData: UserData | SearchUserData) => {
+    if (user && userData.id === user.id) {
       return 'You';
     }
-    return `${user.firstName} ${user.lastName}`;
+    return `${userData.firstName} ${userData.lastName}`;
   };
 
   // Helper function to check if user is marked as attended
@@ -209,7 +207,6 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
     try {
       await withdrawFromEvent(event.id);
       onEventUpdate?.();
-      setIsOpen(false);
     } catch (error) {
       console.error('Failed to withdraw from event:', error);
     } finally {
@@ -435,7 +432,7 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
                             <AlertDialogHeader>
                               <AlertDialogTitle>Remove Organizer</AlertDialogTitle>
                               <AlertDialogDescription>
-                                {currentUser && organizer.id === currentUser.id
+                                {user && organizer.id === user.id
                                   ? "Are you sure you want to remove yourself as an organizer?"
                                   : `Are you sure you want to remove ${displayUserName(organizer)} as an organizer?`
                                 }
@@ -669,7 +666,7 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
 
 const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) => {
   const [loading, setLoading] = useState(false);
-  const { currentUser } = useUser();
+  const { user } = useUser();
   const { event, role } = eventWithRole;
   
   const formattedDate = new Date(event.dateTime).toLocaleDateString('en-US', {
@@ -698,11 +695,11 @@ const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) =
   };
 
   // Helper function to display user name with 'You' for current user
-  const displayUserName = (user: UserData) => {
-    if (currentUser && user.id === currentUser.id) {
+  const displayUserName = (userData: UserData) => {
+    if (user && userData.id === user.id) {
       return 'You';
     }
-    return `${user.firstName} ${user.lastName}`;
+    return `${userData.firstName} ${userData.lastName}`;
   };
 
   return (

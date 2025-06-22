@@ -187,7 +187,7 @@ const EventsWindow = () => {
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
+              <Filter className="mr-1 h-4 w-4" />
               Filters
             </Button>
           </PopoverTrigger>

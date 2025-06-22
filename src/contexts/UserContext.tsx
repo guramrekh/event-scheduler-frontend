@@ -5,11 +5,16 @@ interface UserData {
   firstName: string;
   lastName: string;
   email: string;
+  attendedEventsCount: number;
+  organizedEventsCount: number;
+  withdrawnFromEventsCount: number;
+  kickedOutFromEventsCount: number;
 }
 
 interface UserContextType {
-  currentUser: UserData | null;
-  setCurrentUser: (user: UserData | null) => void;
+  user: UserData | null;
+  setUser: (user: UserData | null) => void;
+  updateUser: (updates: Partial<UserData>) => void;
   clearUserState: () => void;
 }
 
@@ -28,14 +33,20 @@ interface UserProviderProps {
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<UserData | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
+
+  const updateUser = (updates: Partial<UserData>) => {
+    if (user) {
+      setUser({ ...user, ...updates });
+    }
+  };
 
   const clearUserState = () => {
-    setCurrentUser(null);
+    setUser(null);
   };
 
   return (
-    <UserContext.Provider value={{ currentUser, setCurrentUser, clearUserState }}>
+    <UserContext.Provider value={{ user, setUser, updateUser, clearUserState }}>
       {children}
     </UserContext.Provider>
   );

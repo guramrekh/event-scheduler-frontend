@@ -154,4 +154,23 @@ export async function markAllAttended(eventId: number) {
   return api.put("/events/mark-all-attended", null, { params: { eventId } });
 }
 
+export async function updateUserProfile(userData: {
+  firstName: string;
+  lastName: string;
+}) {
+  return api.put("/users/edit", userData);
+}
+
+export async function resetPassword(passwordData: {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}) {
+  return api.post("/users/change-password", passwordData);
+}
+
+export async function deleteAccount() {
+  return api.delete("/users/delete");
+}
+
 export default api;

@@ -13,8 +13,7 @@ const LandingPage = () => {
         <nav className="ml-auto flex items-center gap-4 sm:gap-6">
           <Link
             to="/login"
-            className="text-sm font-medium hover:underline underline-offset-4"
-          >
+            className="text-sm font-medium hover:underline underline-offset-4">
             Login
           </Link>
           <Button asChild>

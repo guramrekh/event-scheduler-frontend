@@ -29,7 +29,7 @@ import UserProfile from "./dashboard/UserProfile";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { cn, formatNotificationDate } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useUser } from "@/contexts/UserContext";
 
@@ -67,13 +67,12 @@ const Header = () => {
     setError(null);
     fetchNotifications()
       .then(res => {
-        // Ensure notifications is always an array
         const notificationsData = Array.isArray(res.data) ? res.data : [];
         setNotifications(notificationsData);
       })
       .catch(() => {
         setError("Failed to load notifications.");
-        setNotifications([]); // Set empty array on error
+        setNotifications([]);
       })
       .finally(() => setLoading(false));
   };
@@ -129,7 +128,7 @@ const Header = () => {
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 py-2 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:pt-4">
       
       <div className="flex items-center gap-2">
-         <Link to="/" className="flex items-center gap-2 font-semibold">
+         <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
             <img src="/logo.jpg" alt="Logo" className="h-7 w-7" />
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Huddle</span>
           </Link>
@@ -187,7 +186,7 @@ const Header = () => {
                       ) : null}
                       <span className="font-normal text-muted-foreground ml-1">{notif.message}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground">{new Date(notif.createdAt).toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">{formatNotificationDate(notif.createdAt)}</p>
                   </div>
                   {!notif.read && (
                     <Tooltip>
@@ -215,9 +214,7 @@ const Header = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link to="/dashboard/settings">Settings</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/dashboard/account">Profile</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>

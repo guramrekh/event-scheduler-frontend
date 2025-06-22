@@ -10,14 +10,14 @@ import Register from "./pages/Register";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import InvitationsPage from "./pages/dashboard/InvitationsPage";
-import SettingsPage from "./pages/dashboard/SettingsPage";
+import AccountPage from "./pages/dashboard/AccountPage";
 import AuthGuard from "./components/AuthGuard";
 import { UserProvider } from "./contexts/UserContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <QueryClientProvider client={queryClient}>  
     <TooltipProvider>
       <UserProvider>
         <Toaster />
@@ -34,7 +34,7 @@ const App = () => (
             }>
               <Route index element={<DashboardPage />} />
               <Route path="invitations" element={<InvitationsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
+              <Route path="account" element={<AccountPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
