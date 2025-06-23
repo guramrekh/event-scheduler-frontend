@@ -52,7 +52,7 @@ const getNotificationIcon = (type: string) => {
 
 const Header = () => {
   const navigate = useNavigate();
-  const { clearUserState } = useUser();
+  const { user, clearUserState } = useUser();
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     `transition-colors hover:text-foreground ${
       isActive ? "text-foreground font-semibold" : "text-muted-foreground"
@@ -209,7 +209,10 @@ const Header = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
-              <img src="/placeholder.svg" className="rounded-full h-8 w-8" alt="user avatar"/>
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.profilePictureUrl} alt={`${user?.firstName} ${user?.lastName}`} />
+                <AvatarFallback>{`${user?.firstName?.charAt(0) ?? ''}${user?.lastName?.charAt(0) ?? ''}`.toUpperCase()}</AvatarFallback>
+              </Avatar>
               <span className="sr-only">Toggle user menu</span>
             </Button>
           </DropdownMenuTrigger>

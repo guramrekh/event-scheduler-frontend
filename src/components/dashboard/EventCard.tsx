@@ -42,29 +42,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { getUserByEmail, getUsersByName, inviteUser, getCurrentUser } from "@/lib/api";
 import { useUser } from "@/contexts/UserContext";
 
-// User type for organizers and attendees
 interface UserData {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
+  profilePictureUrl: string;
 }
 
-// Type for search results
 interface SearchUserData {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
+  profilePictureUrl: string;
 }
 
-// Type for current user
-interface CurrentUserData {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
 
 // Attendance status enum
 enum AttendanceStatus {
@@ -97,9 +90,9 @@ interface EventCardProps {
 }
 
 // User Summary Modal Component
-const UserSummaryModal: React.FC<{ user: UserData; children: React.ReactNode }> = ({ user, children }) => {
+const UserSummaryModal: React.FC<{ user: any; children: React.ReactNode }> = ({ user, children }) => {
   const fullName = `${user.firstName} ${user.lastName}`;
-  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
+  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
   return (
     <Dialog>
@@ -110,7 +103,7 @@ const UserSummaryModal: React.FC<{ user: UserData; children: React.ReactNode }> 
         <DialogHeader>
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src="" alt={fullName} />
+              <AvatarImage src={user.profilePictureUrl} alt={fullName} />
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div>
@@ -575,9 +568,9 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
                       <div key={user.id} className="flex items-center justify-between p-2 border rounded">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src="" alt={`${user.firstName} ${user.lastName}`} />
+                            <AvatarImage src={user.profilePictureUrl} alt={`${user.firstName} ${user.lastName}`} />
                             <AvatarFallback className="text-xs">
-                              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                              {`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div>

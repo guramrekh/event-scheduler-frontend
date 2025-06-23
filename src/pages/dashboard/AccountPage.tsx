@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
+import ProfilePictureUploader from "@/components/dashboard/ProfilePictureUploader";
 
 const AccountPage = () => {
   const { user, updateUser, clearUserState } = useUser();
@@ -31,6 +32,7 @@ const AccountPage = () => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -157,12 +159,20 @@ const AccountPage = () => {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center space-x-6">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src="/placeholder.svg" alt={user?.firstName} />
-                <AvatarFallback className="text-2xl">
-                  {getInitials(user?.firstName || "", user?.lastName || "")}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative group">
+                <Avatar
+                  className="h-20 w-20 cursor-pointer border-2 border-transparent group-hover:border-primary transition"
+                  onClick={() => setAvatarModalOpen(true)}
+                >
+                  {user?.profilePictureUrl ? (
+                    <AvatarImage src={user.profilePictureUrl} alt={user?.firstName} />
+                  ) : null}
+                  <AvatarFallback className="text-2xl">
+                    {getInitials(user?.firstName || "", user?.lastName || "")}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-primary text-white text-xs rounded px-2 py-0.5 opacity-0 group-hover:opacity-100 transition pointer-events-none">Change</span>
+              </div>
               <div className="flex-1">
                 <h3 className="text-2xl font-semibold mb-1">
                   {user?.firstName} {user?.lastName}
@@ -373,6 +383,17 @@ const AccountPage = () => {
           </div>
         </CardContent>
       </Card>
+      
+      <ProfilePictureUploader
+        value={user?.profilePictureUrl}
+        fallback={getInitials(user?.firstName || '', user?.lastName || '')}
+        onUpload={(url) => {
+          updateUser({ profilePictureUrl: url });
+          setAvatarModalOpen(false);
+        }}
+        open={avatarModalOpen}
+        onOpenChange={setAvatarModalOpen}
+      />
     </div>
   );
 };

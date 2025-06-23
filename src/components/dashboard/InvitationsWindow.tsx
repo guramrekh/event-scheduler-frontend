@@ -19,7 +19,7 @@ import api from "@/lib/api";
 
 const UserSummaryModal = ({ user, children }: { user: any; children: React.ReactNode }) => {
   const fullName = `${user.firstName} ${user.lastName}`;
-  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
+  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -27,7 +27,7 @@ const UserSummaryModal = ({ user, children }: { user: any; children: React.React
         <DialogHeader>
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src="" alt={fullName} />
+              <AvatarImage src={user.profilePictureUrl} alt={fullName} />
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div>

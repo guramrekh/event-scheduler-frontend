@@ -5,6 +5,7 @@ interface UserData {
   firstName: string;
   lastName: string;
   email: string;
+  profilePictureUrl: string;
   attendedEventsCount: number;
   organizedEventsCount: number;
   withdrawnFromEventsCount: number;
