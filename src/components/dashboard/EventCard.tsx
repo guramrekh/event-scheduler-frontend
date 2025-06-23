@@ -47,6 +47,7 @@ interface UserData {
   firstName: string;
   lastName: string;
   email: string;
+  bio?: string;
   profilePictureUrl: string;
 }
 
@@ -101,25 +102,27 @@ const UserSummaryModal: React.FC<{ user: any; children: React.ReactNode }> = ({ 
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user.profilePictureUrl} alt={fullName} />
-              <AvatarFallback className="text-lg">{initials}</AvatarFallback>
-            </Avatar>
-            <div>
-              <DialogTitle className="text-2xl">{fullName}</DialogTitle>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>{user.email}</span>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={user.profilePictureUrl} alt={fullName} />
+                <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+              </Avatar>
+              <div>
+                <DialogTitle className="text-2xl">{fullName}</DialogTitle>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                  <span>{user.email}</span>
+                </div>
               </div>
             </div>
+            {user.bio && (
+              <div className="pt-4 border-t">
+                <p className="text-base text-foreground whitespace-pre-line break-words">{user.bio}</p>
+              </div>
+            )}
           </div>
         </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground">
-            Here you could see user's event history, preferences, or other details.
-          </p>
-        </div>
       </DialogContent>
     </Dialog>
   );
@@ -386,7 +389,11 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
               {event.organizers.map((organizer) => (
                 <div key={organizer.id} className="flex items-center justify-between">
                   <UserSummaryModal user={organizer}>
-                    <span className="text-base font-medium text-primary hover:underline cursor-pointer">
+                    <span className="flex items-center gap-3 font-medium text-primary hover:underline cursor-pointer text-base">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={organizer.profilePictureUrl} alt={`${organizer.firstName} ${organizer.lastName}`} />
+                        <AvatarFallback className="text-sm">{`${organizer.firstName.charAt(0)}${organizer.lastName.charAt(0)}`.toUpperCase()}</AvatarFallback>
+                      </Avatar>
                       {displayUserName(organizer)}
                     </span>
                   </UserSummaryModal>
@@ -454,7 +461,11 @@ const EventManagementModal: React.FC<{ event: EventData; onEventUpdate?: () => v
               {event.attendees.map((attendee) => (
                 <div key={attendee.id} className="flex items-center justify-between">
                   <UserSummaryModal user={attendee}>
-                    <span className="text-base font-medium text-primary hover:underline cursor-pointer">
+                    <span className="flex items-center gap-3 font-medium text-primary hover:underline cursor-pointer text-base">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={attendee.profilePictureUrl} alt={`${attendee.firstName} ${attendee.lastName}`} />
+                        <AvatarFallback className="text-sm">{`${attendee.firstName.charAt(0)}${attendee.lastName.charAt(0)}`.toUpperCase()}</AvatarFallback>
+                      </Avatar>
                       {displayUserName(attendee)}
                     </span>
                   </UserSummaryModal>
@@ -755,15 +766,8 @@ const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) =
                       {event.organizers.map((organizer) => (
                         <div key={organizer.id} className="flex items-center gap-2">
                           <UserSummaryModal user={organizer}>
-                            <span className="font-medium text-primary hover:underline cursor-pointer text-sm flex items-center gap-1">
+                            <span className="font-medium text-primary hover:underline cursor-pointer text-base">
                               {displayUserName(organizer)}
-                              <Star className="h-4 w-4 text-yellow-500 inline" />
-                              {!isUpcoming && event.userAttendanceStatus?.[organizer.id] === AttendanceStatus.ATTENDED && (
-                                <Badge variant="secondary" className="text-xs">✓</Badge>
-                              )}
-                              {!isUpcoming && event.userAttendanceStatus?.[organizer.id] === AttendanceStatus.WITHDRAWN && (
-                                <Badge variant="destructive" className="text-xs">✗</Badge>
-                              )}
                             </span>
                           </UserSummaryModal>
                         </div>
@@ -774,14 +778,8 @@ const EventCard: React.FC<EventCardProps> = ({ eventWithRole, onEventUpdate }) =
                     event.attendees.map((attendee) => (
                       <div key={attendee.id} className="flex items-center gap-2">
                         <UserSummaryModal user={attendee}>
-                          <span className="font-medium text-primary hover:underline cursor-pointer text-sm flex items-center gap-1">
+                          <span className="font-medium text-primary hover:underline cursor-pointer text-base">
                             {displayUserName(attendee)}
-                            {!isUpcoming && event.userAttendanceStatus?.[attendee.id] === AttendanceStatus.ATTENDED && (
-                              <Badge variant="secondary" className="text-xs">✓</Badge>
-                            )}
-                            {!isUpcoming && event.userAttendanceStatus?.[attendee.id] === AttendanceStatus.WITHDRAWN && (
-                              <Badge variant="destructive" className="text-xs">✗</Badge>
-                            )}
                           </span>
                         </UserSummaryModal>
                       </div>

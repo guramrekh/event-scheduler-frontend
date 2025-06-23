@@ -38,6 +38,7 @@ const AccountPage = () => {
   const [profileForm, setProfileForm] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
+    bio: user?.bio || "",
   });
   
   // Password form state
@@ -180,6 +181,11 @@ const AccountPage = () => {
                 <p className="text-lg text-muted-foreground">{user?.email}</p>
               </div>
             </div>
+            {user?.bio && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-base text-foreground whitespace-pre-line break-words">{user.bio}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -219,6 +225,17 @@ const AccountPage = () => {
                     />
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <textarea
+                    id="bio"
+                    className="w-full min-h-[80px] rounded border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={profileForm.bio}
+                    onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })}
+                    maxLength={500}
+                    placeholder="Tell us about yourself..."
+                  />
+                </div>
                 <div className="flex space-x-2">
                   <Button type="submit" disabled={loading} className="flex-1">
                     {loading ? "Saving..." : "Save Changes"}
@@ -231,6 +248,7 @@ const AccountPage = () => {
                       setProfileForm({
                         firstName: user?.firstName || "",
                         lastName: user?.lastName || "",
+                        bio: user?.bio || "",
                       });
                     }}
                     className="flex-1"

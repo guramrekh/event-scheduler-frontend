@@ -25,22 +25,26 @@ const UserSummaryModal = ({ user, children }: { user: any; children: React.React
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user.profilePictureUrl} alt={fullName} />
-              <AvatarFallback className="text-lg">{initials}</AvatarFallback>
-            </Avatar>
-            <div>
-              <DialogTitle className="text-2xl">{fullName}</DialogTitle>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <span>{user.email}</span>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={user.profilePictureUrl} alt={fullName} />
+                <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+              </Avatar>
+              <div>
+                <DialogTitle className="text-2xl">{fullName}</DialogTitle>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <span>{user.email}</span>
+                </div>
               </div>
             </div>
+            {user.bio && (
+              <div className="pt-4 border-t">
+                <p className="text-base text-foreground whitespace-pre-line break-words">{user.bio}</p>
+              </div>
+            )}
           </div>
         </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground">User details and event history could go here.</p>
-        </div>
       </DialogContent>
     </Dialog>
   );
