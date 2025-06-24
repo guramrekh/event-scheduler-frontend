@@ -1,37 +1,16 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import {
-  Bell,
-  Calendar,
-  Check,
-  CheckCheck,
-  Clock,
-  Info,
-  Mail,
-  UserCheck,
-  UserPlus,
-  UserX,
-  XCircle,
-} from "lucide-react";
-
+import { Bell, Check, CheckCheck, Clock, Info, Mail, UserCheck, UserPlus, UserX, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { fetchNotifications, markAllNotificationsAsRead, markNotificationAsRead, logout } from "@/lib/api";
-import UserProfile from "./dashboard/UserProfile";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn, formatNotificationDate } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useUser } from "@/contexts/UserContext";
+
 
 const notificationIcons = {
   EVENT_INVITATION_RECEIVED: <Mail className="h-4 w-4" />,

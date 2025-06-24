@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import EventCard from "./EventCard";
-import { Filter, Plus, Calendar, MapPin, Users } from "lucide-react";
+import { Filter, Plus, Calendar } from "lucide-react";
 
 const EventsWindow = () => {
   const [events, setEvents] = useState<any[]>([]);

@@ -1,38 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { MapPin, Calendar, User, Users, Mail, Star, Settings, LogOut, Edit, UserPlus, UserMinus, UserX, XCircle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin, Calendar, User, Users, Mail, Settings, LogOut, Edit, UserPlus, UserMinus, UserX, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, 
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +15,7 @@ import { withdrawFromEvent, editEvent, cancelEvent, addAsOrganizer, removeAsOrga
 import { Checkbox } from '@/components/ui/checkbox';
 import { getUserByEmail, getUsersByName, inviteUser, getCurrentUser } from "@/lib/api";
 import { useUser } from "@/contexts/UserContext";
+
 
 interface UserData {
   id: number;
@@ -59,8 +34,6 @@ interface SearchUserData {
   profilePictureUrl: string;
 }
 
-
-// Attendance status enum
 enum AttendanceStatus {
   REGISTERED = "REGISTERED",
   ATTENDED = "ATTENDED",

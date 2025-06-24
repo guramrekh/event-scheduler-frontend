@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { getCurrentUser } from '@/lib/api';
 import { useUser } from '@/contexts/UserContext';
 
+
 interface AuthGuardProps {
   children: React.ReactNode;
 }

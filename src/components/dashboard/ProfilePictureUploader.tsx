@@ -5,7 +5,6 @@ import axios from 'axios';
 import api from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const CLOUDINARY_CLOUD_NAME = 'dqplj6koe';
 const PROFILE_PIC_SIZE = 256;
