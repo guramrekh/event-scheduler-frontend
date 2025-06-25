@@ -26,10 +26,6 @@ This is the frontend for the [Event Scheduler application](https://github.com/gu
 1. **Install dependencies:**
    ```bash
    npm install
-   # or
-   yarn install
-   # or
-   pnpm install
    ```
 2. **Run in development:**
    ```bash
@@ -43,11 +39,6 @@ This is the frontend for the [Event Scheduler application](https://github.com/gu
    ```bash
    npm run preview
    ```
-
-
-## 🏢 Backend Repository
-
-This frontend is designed to work with the [Event Scheduler Backend](https://github.com/guramkhech/event-scheduler-backend). Please refer to that repository for API and server-side logic.
 
 
 ## 📚 License
